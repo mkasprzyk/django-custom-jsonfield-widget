@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Exact field value",
+    "condition": "EFV",
+    "fields": [
+      {
+        "name": "name",
+        "value": "hudson-deployer"
+      }
+    ]
+  },
+  {
+    "name": "Regex",
+    "condition": "RE",
+    "fields": [
+      {
+        "name": "name",
+        "value": "hudson-deployer"
+      }
+    ]
+  }
+]

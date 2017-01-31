@@ -1,0 +1,120 @@
+{% load jsonify %}
+{% load staticfiles %}
+
+<link href="{% static "css/bootstrap.min.css" %}" rel="stylesheet">
+
+<div class="container">
+
+    <div class="dropdown form-group">
+        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Add condition
+            <span class="caret"></span></button>
+        <ul class="dropdown-menu">
+            {% for condition, description in condition_choices %}
+                <li><a href="#" data-condition="{{ condition }}" onclick="addCondition(this)">{{ description }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="conditions-container panel-group form-group">
+    </div>
+
+    <div class="conditions-json form-group" hidden>
+        <textarea id="{{ id }}" name="{{ name }}" cols="40" rows="10">
+            {{ conditions|jsonify }}
+        </textarea>
+    </div>
+    <a href="#" onclick="toggleConditionsJson()">json</a>
+
+</div>
+
+<script src="{% static "js/jquery-3.1.1.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+
+<script>
+    var conditions_json_handler = $('#{{ id }}');
+    var conditions_json = JSON.parse(conditions_json_handler.text());
+
+    var updateJsonContent = function() {
+        conditions_json_handler.text(function() {
+            return JSON.stringify(conditions_json);
+        });
+    };
+
+    var toggleConditionsJson = function () {
+        var conditions = $('.conditions-json');
+        conditions.toggle();
+    }
+
+    var loadConditions = function() {
+        $('.conditions-container').empty();
+        $.each(conditions_json, function(condition_pk, condition) {
+            var condition_template = `
+                <div class="condition-${condition_pk} panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" href="#${condition_pk}">${condition.name}</a>
+                        </h4>
+                    </div>
+                </div>
+            `;
+            $('.conditions-container').append(condition_template);
+
+            $.each(condition.fields, function(field_pk, field) {
+                var condition_field_template = `
+                    <div id="${condition_pk}" class="panel-collapse collapse">
+                        <div class="panel-body">
+                            <div class="input-group">
+                                <span class="input-group-addon" id="basic-addon3">field name</span>
+                                <input type="text" class="form-control" data-condition-pk="${condition_pk}" data-field-pk="${field_pk}" data-field-name="name" id="field-name-${condition_pk}${field_pk}" aria-describedby="basic-addon3"
+                                       value="${field.name }" onkeyup="updateConditionField(this)">
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="input-group">
+                                <span class="input-group-addon" id="basic-addon3">${condition.name}</span>
+                                <input type="text" class="form-control" data-condition-pk="${condition_pk}" data-field-pk="${field_pk}" data-field-name="value" id="field-value-${condition_pk}${field_pk}" aria-describedby="basic-addon3"
+                                       value="${field.value }" onkeyup="updateConditionField(this)">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('.condition-'+condition_pk).append(condition_field_template);
+            })
+        })
+    };
+
+    var updateConditionField = function(cls) {
+        $.each(conditions_json, function(condition_pk, condition) {
+            var _condition_pk = $(cls).data('condition-pk');
+            if (_condition_pk == condition_pk) {
+                $.each(condition.fields, function(field_pk, field) {
+                    var _field_pk = $(cls).data('field-pk');
+                    var _field_name = $(cls).data('field-name');
+                    if (_field_pk == field_pk) {
+                        field[_field_name] = $(cls).val();
+                    }
+                })
+            }
+        });
+        updateJsonContent();
+    };
+
+    var addCondition = function(cls) {
+        var blank_condition = {
+            "name": $(cls).text(),
+            "condition": $(cls).data("condition"),
+            "fields": [
+                {
+                    "name": "",
+                    "value": ""
+                }
+            ]
+        };
+        conditions_json.push(blank_condition);
+        updateJsonContent();
+        loadConditions();
+    }
+
+    loadConditions();
+
+</script>
